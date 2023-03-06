@@ -16,6 +16,7 @@ let bankResources = {
 };
 
 let knownEvents = [];
+let knownEventsColor = [];
 let knownEventsLength = 0;
 
 getPlayerUsername();
@@ -34,7 +35,7 @@ function removeAds() {
     ads.push(document.getElementById("in_game_ab_left"));
     ads.push(document.getElementById("in_game_ab_right"));
     ads.push(document.getElementById("in_game_ab_bottom_small"));
-    
+
     ads.push(...document.getElementsByClassName("adsbyvli running"));
 
     for (let i = 0; i < ads.length; i++) {
@@ -45,10 +46,15 @@ function removeAds() {
 
 function updateKnownEvents() {
   setInterval(() => {
-    lastestEvents = [...document.getElementsByClassName("message_post")]; // complete list of events
-    newEvents = lastestEvents.splice(knownEventsLength); // list of new events
+    latestEvents = [...document.getElementsByClassName("message_post")]; // complete list of events
+    newEvents = latestEvents.splice(knownEventsLength); // list of new events
 
     for (let i = 0; i < newEvents.length; i++) {
+      // really messy way of getting the rgb() value of the event text
+      let eventColor = newEvents[i].outerHTML
+        .replace(`<div class="message_post" id="" style="color: `, "")
+        .split(`;"><img`)[0]
+        .replace(`"><hr></div>`, "");
       let event = newEvents[i].innerHTML;
 
       // convert resources defined as <img> tags into their plain text form
@@ -146,14 +152,16 @@ function updateKnownEvents() {
       event = event.replace(/[ \t]{2,}/g, " ");
 
       knownEvents.push(event.trim()); // sanitized log
+      knownEventsColor.push(eventColor);
     }
 
     // process each event
     while (knownEvents.length != knownEventsLength) {
       latestEvent = knownEvents[knownEventsLength];
+      latestEventColor = knownEventsColor[knownEventsLength];
       console.log(knownEventsLength + ":", latestEvent); // console log latest event
 
-      processEvent(latestEvent); // update resource counters
+      processEvent(latestEvent, latestEventColor); // update resource counters
 
       knownEventsLength++;
 
@@ -164,9 +172,9 @@ function updateKnownEvents() {
   }, 1000);
 }
 
-function processEvent(event) {
+function processEvent(event, eventColor) {
   if (event.includes("received starting resources:")) {
-    addNewPlayer(event);
+    addNewPlayer(event, eventColor);
   }
 
   if (event.includes("got:")) {
@@ -216,7 +224,7 @@ function processEvent(event) {
   }
 }
 
-function addNewPlayer(event) {
+function addNewPlayer(event, eventColor) {
   eventItems = event.replace("received starting resources:", "").split(" ");
 
   players.push({
@@ -231,6 +239,7 @@ function addNewPlayer(event) {
     roads: 2,
     settlements: 2,
     cities: 0,
+    color: eventColor,
   });
 
   currentPlayer = players.find((player) => player.name === eventItems[0]);
@@ -568,8 +577,8 @@ function placedARoad(event) {
     (player) => player.name === eventItems[0].trim()
   );
 
-    console.log(currentPlayer);
-    console.log(eventItems);
+  console.log(currentPlayer);
+  console.log(eventItems);
 
   currentPlayer.roads += 2;
   if (currentPlayer.roads > 15) {
@@ -658,7 +667,8 @@ function renderTable() {
 
   for (player of players) {
     playerTBodyRow = playerTBody.insertRow();
-    playerTBodyRow.innerHTML = `<td class="player-name">${player.name}</td><td class="wood">${player.wood}</td><td class="brick">${player.brick}</td><td class="sheep">${player.sheep}</td><td class="wheat">${player.wheat}</td><td class="ore">${player.ore}</td><td class="unknown">+${player.unknownStolen} / -${player.unknownLost}</td><td class="structure">${player.roads}</td><td class="structure">${player.settlements}</td><td class="structure">${player.cities}</td>`;
+    console.log("this player color is:", player.color);
+    playerTBodyRow.innerHTML = `<td class="player-name" style="color:${player.color}">${player.name}</td><td class="wood">${player.wood}</td><td class="brick">${player.brick}</td><td class="sheep">${player.sheep}</td><td class="wheat">${player.wheat}</td><td class="ore">${player.ore}</td><td class="unknown">+${player.unknownStolen} / -${player.unknownLost}</td><td class="structure">${player.roads}</td><td class="structure">${player.settlements}</td><td class="structure">${player.cities}</td>`;
   }
 
   body.appendChild(playerTable);

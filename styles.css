@@ -43,11 +43,11 @@
   }
   
   .wood {
-    color: forestgreen
+    color: greenyellow
   }
   
   .brick {
-    color: crimson
+    color: mediumvioletred;
   }
   
   .sheep {
@@ -63,7 +63,7 @@
   }
   
   .structure {
-    color: salmon;
+    color: firebrick;
   }
   
   .dev-cards {
@@ -74,5 +74,5 @@
   .bank-name {
     font-weight: bold;
     min-width: 125px;
-    color: white;
+    color: antiquewhite;
   }
