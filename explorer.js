@@ -34,6 +34,8 @@ function removeAds() {
     ads.push(document.getElementById("in_game_ab_left"));
     ads.push(document.getElementById("in_game_ab_right"));
     ads.push(document.getElementById("in_game_ab_bottom_small"));
+    
+    ads.push(...document.getElementsByClassName("adsbyvli running"));
 
     for (let i = 0; i < ads.length; i++) {
       ads[i].style.display = "none";
