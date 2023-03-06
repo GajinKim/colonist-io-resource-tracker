@@ -218,7 +218,6 @@ function processEvent(event, eventColor) {
   }
 
   if (players.length != 0) {
-    console.log(players);
     renderTable();
     rebalanceUnknowns();
   }
@@ -423,9 +422,6 @@ function traded(event) {
     (player) => player.name === eventItemsAfterFor.split("with:")[1].trim()
   );
 
-  console.log(tradeInitiator, "is losing", tradeInitiatorResources);
-  console.log(tradeAccepter, "is losing", tradeAccepterResources);
-
   for (let i = 0; i < tradeInitiatorResources.length; i++) {
     if (tradeInitiatorResources[i] === "WOOD") {
       tradeAccepter.wood += 1;
@@ -577,9 +573,6 @@ function placedARoad(event) {
     (player) => player.name === eventItems[0].trim()
   );
 
-  console.log(currentPlayer);
-  console.log(eventItems);
-
   currentPlayer.roads += 2;
   if (currentPlayer.roads > 15) {
     currentPlayer.roads = 15;
@@ -593,6 +586,7 @@ function rebalanceUnknowns() {
       continue;
     }
 
+    // player has negative resource
     if (player.wood < 0) {
       player.unknownStolen -= Math.abs(player.wood);
       player.wood = 0;
@@ -614,6 +608,7 @@ function rebalanceUnknowns() {
       player.ore = 0;
     }
 
+    // player has 0 cards
     if (
       player.wood +
         player.brick +
@@ -633,6 +628,29 @@ function rebalanceUnknowns() {
       player.unknownLost = 0;
     }
   }
+
+  // player "has" a resource, but the bank is full 
+  if (bankResources.wood === 19 && player.wood != 0) {
+    player.unknownLost -= player.wood;
+    player.wood = 0;
+  }
+  if (bankResources.brick === 19 && player.brick != 0) {
+    player.unknownLost -= player.brick;
+    player.brick = 0;
+  }
+  if (bankResources.sheep === 19 && player.sheep != 0) {
+    player.unknownLost -= player.sheep;
+    player.sheep = 0;
+  }
+  if (bankResources.wheat === 19 && player.wheat != 0) {
+    player.unknownLost -= player.wheat;
+    player.wheat = 0;
+  }
+  if (bankResources.ore === 19 && player.ore != 0) {
+    player.unknownLost -= player.ore;
+    player.ore = 0;
+  }
+
 }
 
 function getPlayerUsername() {
@@ -667,7 +685,6 @@ function renderTable() {
 
   for (player of players) {
     playerTBodyRow = playerTBody.insertRow();
-    console.log("this player color is:", player.color);
     playerTBodyRow.innerHTML = `<td class="player-name" style="color:${player.color}">${player.name}</td><td class="wood">${player.wood}</td><td class="brick">${player.brick}</td><td class="sheep">${player.sheep}</td><td class="wheat">${player.wheat}</td><td class="ore">${player.ore}</td><td class="unknown">+${player.unknownStolen} / -${player.unknownLost}</td><td class="structure">${player.roads}</td><td class="structure">${player.settlements}</td><td class="structure">${player.cities}</td>`;
   }
 
