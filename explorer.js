@@ -49,6 +49,16 @@ function updateKnownEvents() {
     latestEvents = [...document.getElementsByClassName("message_post")]; // complete list of events
     newEvents = latestEvents.splice(knownEventsLength); // list of new events
 
+    // remove typed chat messages and line breaks
+    for (let i = newEvents.length; i >= 0; i--) {
+      if (
+        (newEvents[i].includes("<b>") && newEvents[i].includes(":</b>")) ||
+        newEvents[i] === "<hr>"
+      ) {
+        newEvents.splice(i, 1);
+      }
+    }
+
     for (let i = 0; i < newEvents.length; i++) {
       // really messy way of getting the rgb() value of the event text
       let eventColor = newEvents[i].outerHTML
