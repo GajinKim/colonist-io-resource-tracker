@@ -50,10 +50,11 @@ function updateKnownEvents() {
     newEvents = latestEvents.splice(knownEventsLength); // list of new events
 
     // remove typed chat messages and line breaks
-    for (let i = newEvents.length; i >= 0; i--) {
+    for (let i = newEvents.length - 1; i >= 0; i--) {
+      let event = newEvents[i].innerHTML;
       if (
-        (newEvents[i].includes("<b>") && newEvents[i].includes(":</b>")) ||
-        newEvents[i] === "<hr>"
+        (event.includes("<b>") && event.includes(":</b>")) ||
+        event === "<hr>"
       ) {
         newEvents.splice(i, 1);
       }
