@@ -627,30 +627,54 @@ function rebalanceUnknowns() {
       player.unknownStolen = 0;
       player.unknownLost = 0;
     }
-  }
 
-  // player "has" a resource, but the bank is full 
-  if (bankResources.wood === 19 && player.wood != 0) {
-    player.unknownLost -= player.wood;
-    player.wood = 0;
-  }
-  if (bankResources.brick === 19 && player.brick != 0) {
-    player.unknownLost -= player.brick;
-    player.brick = 0;
-  }
-  if (bankResources.sheep === 19 && player.sheep != 0) {
-    player.unknownLost -= player.sheep;
-    player.sheep = 0;
-  }
-  if (bankResources.wheat === 19 && player.wheat != 0) {
-    player.unknownLost -= player.wheat;
-    player.wheat = 0;
-  }
-  if (bankResources.ore === 19 && player.ore != 0) {
-    player.unknownLost -= player.ore;
-    player.ore = 0;
-  }
+    // player "has" a resource, but the bank is full
+    if (bankResources.wood === 19 && player.wood != 0) {
+      player.unknownLost -= player.wood;
+      player.wood = 0;
+    }
+    if (bankResources.brick === 19 && player.brick != 0) {
+      player.unknownLost -= player.brick;
+      player.brick = 0;
+    }
+    if (bankResources.sheep === 19 && player.sheep != 0) {
+      player.unknownLost -= player.sheep;
+      player.sheep = 0;
+    }
+    if (bankResources.wheat === 19 && player.wheat != 0) {
+      player.unknownLost -= player.wheat;
+      player.wheat = 0;
+    }
+    if (bankResources.ore === 19 && player.ore != 0) {
+      player.unknownLost -= player.ore;
+      player.ore = 0;
+    }
 
+    // if you have a monopoly of a single resource
+    if (player.name !== playerUsername) {
+      userPlayer = players.find((you) => you.name === playerUsername);
+      if (userPlayer.wood === 19 - bankResources.wood && player.wood != 0) {
+        player.unknownLost -= player.wood;
+        player.wood = 0;
+      }
+      if (userPlayer.brick === 19 - bankResources.brick && player.brick != 0) {
+        player.unknownLost -= player.brick;
+        player.brick = 0;
+      }
+      if (userPlayer.sheep === 19 - bankResources.sheep && player.sheep != 0) {
+        player.unknownLost -= player.sheep;
+        player.sheep = 0;
+      }
+      if (userPlayer.wheat === 19 - bankResources.wheat && player.wheat != 0) {
+        player.unknownLost -= player.wheat;
+        player.wheat = 0;
+      }
+      if (userPlayer.ore === 19 - bankResources.ore && player.ore != 0) {
+        player.unknownLost -= player.ore;
+        player.ore = 0;
+      }
+    }
+  }
 }
 
 function getPlayerUsername() {
