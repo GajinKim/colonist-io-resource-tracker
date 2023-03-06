@@ -1,0 +1,78 @@
+.generic-table {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1);
+    position: absolute;
+  
+    margin: 5px;
+    border-radius: 5px;
+    z-index: 10;
+  }
+
+  .bank-table {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1);
+    position: absolute;
+  
+    margin: 140px 5px 5px 5px;
+    border-radius: 5px;
+    z-index: 10;
+  }
+  
+  .generic-table-body {
+    text-align: center;
+  }
+  
+  .generic-table-header td {
+    font-weight: bold;
+    min-width: 70px;
+    text-align: center;
+  }
+  
+  .unknown {
+    min-width: 125px;
+    color: magenta;
+  }
+  
+  .player-name {
+    min-width: 120px;
+    font-weight: bold;
+  }
+  
+  .player-table-header .structure {
+    color: brown;
+  }
+  
+  .wood {
+    color: forestgreen
+  }
+  
+  .brick {
+    color: crimson
+  }
+  
+  .sheep {
+    color: lightgreen
+  }
+  
+  .wheat {
+    color: darkorange;
+  }
+  
+  .ore {
+    color: lightgray;
+  }
+  
+  .structure {
+    color: salmon;
+  }
+  
+  .dev-cards {
+    min-width: 125px;
+    color: magenta;
+  }
+  
+  .bank-name {
+    font-weight: bold;
+    min-width: 125px;
+    color: white;
+  }

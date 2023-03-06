@@ -1,0 +1,18 @@
+{
+    "name": "Colonist.io Extension Helper",
+    "manifest_version": 2,
+    "description": "My Colonist.io Extension",
+    "version": "0.0.1",
+    "permissions": [
+        "https://colonist.io/*",
+        "https://hexs.io/*"
+    ],
+    "content_scripts": [
+        {
+          "matches": ["https://colonist.io/*", "https://hexs.io/*"],
+          "css": ["styles.css"],
+          "run_at": "document_idle",
+          "js": ["explorer.js"]
+        }
+      ]
+}
