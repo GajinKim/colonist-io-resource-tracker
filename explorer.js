@@ -15,9 +15,8 @@ let bankResources = {
   devCards: 25,
 };
 
-let knownEvents = [];
-let knownEventsColor = [];
-let knownEventsLength = 0;
+let unprocessedEvents = [];
+let processedEvents = [];
 
 getPlayerUsername();
 removeAds();
@@ -36,7 +35,7 @@ function removeAds() {
     ads.push(document.getElementById("in_game_ab_right"));
     ads.push(document.getElementById("in_game_ab_bottom_small"));
 
-    ads.push(...document.getElementsByClassName("adsbyvli running"));
+    // ads.push(...document.getElementsByClassName("adsbyvli running"));
 
     for (let i = 0; i < ads.length; i++) {
       ads[i].style.display = "none";
@@ -44,198 +43,212 @@ function removeAds() {
   }, 500);
 }
 
+/**
+ * Three basic steps
+ *
+ * 1. Detect "new events" found in the latestEventLog (updated every 2.5sec)
+ * 2. Sanitize each of the "new events"
+ * 3. Append the "sanitized events" to the unprocessedEvents list
+ */
 function updateKnownEvents() {
   setInterval(() => {
-    latestEvents = [...document.getElementsByClassName("message_post")]; // complete list of events
-    newEvents = latestEvents.splice(knownEventsLength); // list of new events
+    // detecting new events to process:
 
-    // remove typed chat messages and line breaks
-    for (let i = newEvents.length - 1; i >= 0; i--) {
-      let event = newEvents[i].innerHTML;
-      if (
-        (event.includes("<b>") && event.includes(":</b>")) ||
-        event === "<hr>"
-      ) {
-        newEvents.splice(i, 1);
-      }
-    }
+    latestEventLog = [...document.getElementsByClassName("message_post")];
+    newEvents = latestEventLog.splice(
+      processedEvents.length + unprocessedEvents.length
+    );
 
     for (let i = 0; i < newEvents.length; i++) {
-      // really messy way of getting the rgb() value of the event text
-      let eventColor = newEvents[i].outerHTML
+      let newEvent = newEvents[i];
+      let newEventColor = newEvent.outerHTML
         .replace(`<div class="message_post" id="" style="color: `, "")
         .split(`;"><img`)[0]
         .replace(`"><hr></div>`, "");
-      let event = newEvents[i].innerHTML;
 
-      // convert resources defined as <img> tags into their plain text form
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_lumber.svg?v153\" alt=\"lumber\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "WOOD "
-      );
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_brick.svg?v153\" alt=\"brick\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "BRICK "
-      );
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_wool.svg?v153\" alt=\"wool\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "SHEEP "
-      );
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_grain.svg?v153\" alt=\"grain\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "WHEAT "
-      );
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_ore.svg?v153\" alt=\"ore\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "ORE "
-      );
-      event = event.replaceAll(
-        `<img src=\"/dist/images/card_rescardback.svg?v153\" alt=\"card\" height=\"20\" width=\"14.25\" class=\"lobby-chat-text-icon\">`,
-        "UNKNOWN "
-      );
+      // console.log("raw text", newEvent.innerHTML)
 
-      // convert dev cards, roads, settlements, cities
-      event = event.replaceAll(
-        '<img src="/dist/images/card_devcardback.svg?v153" alt="development card" height="20" width="14.25" class="lobby-chat-text-icon">',
-        "DEV_CARD"
-      );
-      event = event.replaceAll(
-        /<img src="\/dist\/images\/road_.*\.svg\?v153" alt="road" height="20" width="20" class="lobby-chat-text-icon">/g,
-        "ROAD"
-      );
-      event = event.replaceAll(
-        /<img src="\/dist\/images\/settlement_.*\.svg\?v153" alt="settlement" height="20" width="20" class="lobby-chat-text-icon">/g,
-        "SETTLEMENT"
-      );
-      event = event.replaceAll(
-        /<img src="\/dist\/images\/city_.*\.svg\?v153" alt="city" height="20" width="20" class="lobby-chat-text-icon">/g,
-        "CITY"
-      );
+      let sanitizedNewEventText = sanitizeEventText(newEvent.innerHTML);
 
-      // dev card pops
-      event = event.replaceAll(
-        /<a href="#card-description-popup-7">Knight <img src="\/dist\/images\/card_knight\.svg\?v153" alt="card knight" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/g,
-        "KNIGHT"
-      );
-      event = event.replaceAll(
-        /<a href="#card-description-popup-9">Monopoly <img src="\/dist\/images\/card_monopoly\.svg\?v153" alt="card monopoly" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/g,
-        "MONOPOLY"
-      );
-      event = event.replaceAll(
-        /<a href="#card-description-popup-10">Road Building <img src="\/dist\/images\/card_roadbuilding\.svg\?v153" alt="card road building" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/g,
-        "ROAD_BUILDING"
-      );
-      event = event.replaceAll(
-        /<a href="#card-description-popup-11">Year of Plenty <img src="\/dist\/images\/card_yearofplenty\.svg\?v153" alt="card year of plenty" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/g,
-        "YEAR_OF_PLENTY"
-      );
+      // console.log("sanitized text", sanitizedNewEventText);
 
-      // dice
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_1.svg?v153" alt="dice_1" height="20" width="20" class="lobby-chat-text-icon">',
-        "1"
-      );
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_2.svg?v153" alt="dice_2" height="20" width="20" class="lobby-chat-text-icon">',
-        "2"
-      );
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_3.svg?v153" alt="dice_3" height="20" width="20" class="lobby-chat-text-icon">',
-        "3"
-      );
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_4.svg?v153" alt="dice_4" height="20" width="20" class="lobby-chat-text-icon">',
-        "4"
-      );
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_5.svg?v153" alt="dice_5" height="20" width="20" class="lobby-chat-text-icon">',
-        "5"
-      );
-      event = event.replaceAll(
-        '<img src="/dist/images/dice_6.svg?v153" alt="dice_6" height="20" width="20" class="lobby-chat-text-icon">',
-        "6"
-      );
-
-      // remove any remaining <img> tags (e.g. icon text)
-      event = event.replace(/<img[\s\S]*?>/g, "");
-
-      // remove any multiple spaces with single spaces
-      event = event.replace(/[ \t]{2,}/g, " ");
-
-      knownEvents.push(event.trim()); // sanitized log
-      knownEventsColor.push(eventColor);
+      unprocessedEvents.push({
+        text: sanitizedNewEventText,
+        color: newEventColor,
+      });
     }
 
-    // process each event
-    while (knownEvents.length != knownEventsLength) {
-      latestEvent = knownEvents[knownEventsLength];
-      latestEventColor = knownEventsColor[knownEventsLength];
-      console.log(knownEventsLength + ":", latestEvent); // console log latest event
-
-      processEvent(latestEvent, latestEventColor); // update resource counters
-
-      knownEventsLength++;
-
-      //   if (knownEventsLength % 5 == 0) {
-      //     console.log(knownEvents);
-      //   }
+    if (unprocessedEvents.length != 0) {
+      console.log("processing", unprocessedEvents.length, "new events");
     }
-  }, 1000);
+
+    while (unprocessedEvents.length > 0) {
+      eventToProcess = unprocessedEvents.pop();
+      console.log("processing event:", eventToProcess.text); // console log latest event
+
+      processEvent(eventToProcess); // update resource counters
+
+      // after processing event move it to processed list
+      processedEvents.push(eventToProcess);
+    }
+    
+    rebalanceUnknowns();
+
+    // maybe we can reset the known events array
+    // as well as the known events length?\
+    // and known events colors array?
+  }, 2000);
 }
 
-function processEvent(event, eventColor) {
-  if (event.includes("received starting resources:")) {
-    addNewPlayer(event, eventColor);
+function sanitizeEventText(eventText) {
+  let sanitizedEventText = eventText;
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_lumber\.svg\?v([0-9]+)" alt="lumber" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "WOOD "
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_brick\.svg\?v([0-9]+)" alt="brick" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "BRICK "
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_wool\.svg\?v([0-9]+)" alt="wool" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "SHEEP "
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_grain\.svg\?v([0-9]+)" alt="grain" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "WHEAT "
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_ore\.svg\?v([0-9]+)" alt="ore" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "ORE "
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_rescardback\.svg\?v([0-9]+)" alt="card" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "UNKNOWN "
+  );
+
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/card_devcardback\.svg\?v([0-9]+)" alt="development card" height="20" width="14\.25" class="lobby-chat-text-icon">/gm,
+    "DEV_CARD"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/road_.*\.svg\?v([0-9]+)" alt="road" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "ROAD"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/settlement_.*\.svg\?v([0-9]+)" alt="settlement" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "SETTLEMENT"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/city_.*\.svg\?v([0-9]+)" alt="city" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "CITY"
+  );
+
+  // dev card pops
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<a href="#card-description-popup-7">Knight <img src="\/dist\/images\/card_knight\.svg\?v([0-9]+)" alt="card knight" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/gm,
+    "KNIGHT"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<a href="#card-description-popup-9">Monopoly <img src="\/dist\/images\/card_monopoly\.svg\?v([0-9]+)" alt="card monopoly" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/gm,
+    "MONOPOLY"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<a href="#card-description-popup-10">Road Building <img src="\/dist\/images\/card_roadbuilding\.svg\?v([0-9]+)" alt="card road building" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/gm,
+    "ROAD_BUILDING"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<a href="#card-description-popup-11">Year of Plenty <img src="\/dist\/images\/card_yearofplenty\.svg\?v([0-9]+)" alt="card year of plenty" height="20" width="14\.25" class="lobby-chat-text-icon"><\/a>/gm,
+    "YEAR_OF_PLENTY"
+  );
+
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_1.svg\?v([0-9]+)" alt="dice_1" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "1"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_2.svg\?v([0-9]+)" alt="dice_2" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "2"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_3.svg\?v([0-9]+)" alt="dice_3" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "3"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_4.svg\?v([0-9]+)" alt="dice_4" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "4"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_5.svg\?v([0-9]+)" alt="dice_5" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "5"
+  );
+  sanitizedEventText = sanitizedEventText.replaceAll(
+    /<img src="\/dist\/images\/dice_6.svg\?v([0-9]+)" alt="dice_6" height="20" width="20" class="lobby-chat-text-icon">/gm,
+    "6"
+  );
+
+  sanitizedEventText = sanitizedEventText.replace(/<img[\s\S]*?>/gm, "");
+  sanitizedEventText = sanitizedEventText.replace(/[ \t]{2,}/gm, " ");
+
+  return sanitizedEventText.trim();
+}
+
+function processEvent(eventToProcess) {
+  let eventText = eventToProcess.text;
+
+  if (eventText.includes("received starting resources:")) {
+    addNewPlayer(eventToProcess);
   }
 
-  if (event.includes("got:")) {
-    gotResource(event);
+  if (eventText.includes("got:")) {
+    gotResource(eventText);
   }
 
-  if (event.includes("built a")) {
-    builtA(event);
+  if (eventText.includes("built a")) {
+    builtA(eventText);
   }
 
-  if (event.includes("bought DEV_CARD")) {
-    boughtDevCard(event);
+  if (eventText.includes("bought DEV_CARD")) {
+    boughtDevCard(eventText);
   }
 
-  if (event.includes("gave bank:")) {
-    gaveBank(event);
+  if (eventText.includes("gave bank:")) {
+    gaveBank(eventText);
   }
 
-  if (event.includes("discarded:")) {
-    discarded(event);
+  if (eventText.includes("discarded:")) {
+    discarded(eventText);
   }
 
-  if (event.includes("traded:")) {
-    traded(event);
+  if (eventText.includes("traded:")) {
+    traded(eventText);
   }
 
-  if (event.includes("stole") && event.includes("from")) {
-    stoleFrom(event);
+  if (eventText.includes("stole") && eventText.includes("from")) {
+    stoleFrom(eventText);
   }
 
-  if (event.match(/.* stole ([0-9]|1[0-9]): .*/g)) {
-    monopoly(event);
+  if (eventText.match(/.* stole ([0-9]|1[0-9]): .*/g)) {
+    monopoly(eventText);
   }
 
-  if (event.includes("took from bank:")) {
-    tookFromBank(event);
+  if (eventText.includes("took from bank:")) {
+    tookFromBank(eventText);
   }
 
-  if (event.includes("used ROAD_BUILDING")) {
-    placedARoad(event);
+  if (eventText.includes("used ROAD_BUILDING")) {
+    placedARoad(eventText);
   }
 
   if (players.length != 0) {
     renderTable();
-    rebalanceUnknowns();
   }
 }
 
-function addNewPlayer(event, eventColor) {
-  eventItems = event.replace("received starting resources:", "").split(" ");
+function addNewPlayer(event) {
+  eventItems = event.text
+    .replace("received starting resources:", "")
+    .split(" ");
 
   players.push({
     name: eventItems[0],
@@ -249,7 +262,7 @@ function addNewPlayer(event, eventColor) {
     roads: 2,
     settlements: 2,
     cities: 0,
-    color: eventColor,
+    color: event.color,
   });
 
   currentPlayer = players.find((player) => player.name === eventItems[0]);
@@ -274,9 +287,12 @@ function addNewPlayer(event, eventColor) {
   }
 }
 
-function gotResource(event) {
-  eventItems = event.replace("got:", "").split(" ");
+function gotResource(eventText) {
+  eventItems = eventText.replace("got:", "").split(" ");
   currentPlayer = players.find((player) => player.name === eventItems[0]);
+
+  console.log("event item", eventItems);
+  console.log("current player", currentPlayer);
 
   for (let i = 1; i < eventItems.length; i++) {
     if (eventItems[i] === "WOOD") {
@@ -298,8 +314,8 @@ function gotResource(event) {
   }
 }
 
-function gaveBank(event) {
-  eventItems = event.split("and took");
+function gaveBank(eventText) {
+  eventItems = eventText.split("and took");
   gaveBankEventItems = eventItems[0].replace("gave bank:", "").split(" ");
   andTookEventItems = eventItems[1].split(" ");
   currentPlayer = players.find(
@@ -345,8 +361,8 @@ function gaveBank(event) {
   }
 }
 
-function builtA(event) {
-  eventItems = event.replace("built a", "").split(" ");
+function builtA(eventText) {
+  eventItems = eventText.replace("built a", "").split(" ");
   currentPlayer = players.find((player) => player.name === eventItems[0]);
 
   for (let i = 1; i < eventItems.length; i++) {
@@ -377,13 +393,14 @@ function builtA(event) {
   }
 }
 
-function boughtDevCard(event) {
-  eventItems = event.replace("bought DEV_CARD", "").split(" ");
+function boughtDevCard(eventText) {
+  eventItems = eventText.replace("bought DEV_CARD", "").split(" ");
   currentPlayer = players.find((player) => player.name === eventItems[0]);
 
   currentPlayer.sheep -= 1;
   currentPlayer.wheat -= 1;
   currentPlayer.ore -= 1;
+
   bankResources.sheep += 1;
   bankResources.wheat += 1;
   bankResources.ore += 1;
@@ -391,8 +408,8 @@ function boughtDevCard(event) {
   bankResources.devCards -= 1;
 }
 
-function discarded(event) {
-  eventItems = event.replace("discarded:", "").split(" ");
+function discarded(eventText) {
+  eventItems = eventText.replace("discarded:", "").split(" ");
   currentPlayer = players.find((player) => player.name === eventItems[0]);
 
   for (let i = 1; i < eventItems.length; i++) {
@@ -415,9 +432,9 @@ function discarded(event) {
   }
 }
 
-function traded(event) {
+function traded(eventText) {
   // player1 traded: BRICK BRICK for: ORE ORE with: player2
-  eventItems = event.split("traded:");
+  eventItems = eventText.split("traded:");
 
   tradeInitiator = players.find(
     (player) => player.name === eventItems[0].trim()
@@ -472,8 +489,8 @@ function traded(event) {
   }
 }
 
-function stoleFrom(event) {
-  eventItems = event.split(" ");
+function stoleFrom(eventText) {
+  eventItems = eventText.split(" ");
 
   stealerName = eventItems[0] === "You" ? playerUsername : eventItems[0];
   victimName =
@@ -485,7 +502,7 @@ function stoleFrom(event) {
   victim = players.find((player) => player.name === victimName);
 
   // depends on whether you know who stole the resource
-  if (event.includes("UNKNOWN")) {
+  if (eventText.includes("UNKNOWN")) {
     stealer.unknownStolen += 1;
     victim.unknownLost += 1;
   } else {
@@ -510,8 +527,8 @@ function stoleFrom(event) {
   }
 }
 
-function monopoly(event) {
-  eventItems = event.split(" ");
+function monopoly(eventText) {
+  eventItems = eventText.split(" ");
 
   currentPlayer = players.find((player) => player.name === eventItems[0]);
   numberStolen = parseInt(eventItems[2]);
@@ -551,8 +568,8 @@ function monopoly(event) {
   }
 }
 
-function tookFromBank(event) {
-  eventItems = event.split("took from bank:");
+function tookFromBank(eventText) {
+  eventItems = eventText.split("took from bank:");
   currentPlayer = players.find(
     (player) => player.name === eventItems[0].trim()
   );
@@ -578,8 +595,8 @@ function tookFromBank(event) {
   }
 }
 
-function placedARoad(event) {
-  eventItems = event.split("used ROAD_BUILDING");
+function placedARoad(eventText) {
+  eventItems = eventText.split("used ROAD_BUILDING");
   currentPlayer = players.find(
     (player) => player.name === eventItems[0].trim()
   );
@@ -712,7 +729,7 @@ function renderTable() {
   playerTBody.className = "generic-table-body";
   playerTFooter.className = "generic-table-footer";
 
-  playerTHeader.innerHTML = `<td class="player-name"></td><td class="wood">Wood</td><td class="brick">Brick</td><td class="sheep">Sheep</td><td class="wheat">Wheat</td><td class="ore">Ore</td><td class="unknown">Stolen / Lost (?)</td><td class="structure">Roads</td><td class="structure">Settlements</td><td class="structure">Cities</td>`;
+  playerTHeader.innerHTML = `<td class="player-name"></td><td class="wood">Wood</td><td class="brick">Brick</td><td class="sheep">Sheep</td><td class="wheat">Wheat</td><td class="ore">Ore</td><td class="unknown">Stolen / Lost (?)</td><td class="hand-size">Hand</td><td class="structure">Roads</td><td class="structure">Settlements</td><td class="structure">Cities</td>`;
 
   for (let i = playerTable.rows.length - 1; i > 0; i--) {
     playerTable.deleteRow(i);
@@ -720,7 +737,7 @@ function renderTable() {
 
   for (player of players) {
     playerTBodyRow = playerTBody.insertRow();
-    playerTBodyRow.innerHTML = `<td class="player-name" style="color:${player.color}">${player.name}</td><td class="wood">${player.wood}</td><td class="brick">${player.brick}</td><td class="sheep">${player.sheep}</td><td class="wheat">${player.wheat}</td><td class="ore">${player.ore}</td><td class="unknown">+${player.unknownStolen} / -${player.unknownLost}</td><td class="structure">${player.roads}</td><td class="structure">${player.settlements}</td><td class="structure">${player.cities}</td>`;
+    playerTBodyRow.innerHTML = `<td class="player-name" style="color:${player.color}">${player.name}</td><td class="wood">${player.wood}</td><td class="brick">${player.brick}</td><td class="sheep">${player.sheep}</td><td class="wheat">${player.wheat}</td><td class="ore">${player.ore}</td><td class="unknown">+${player.unknownStolen} / -${player.unknownLost}</td><td class="hand-size">${player.wood + player.brick + player.sheep + player.wheat + player.ore + player.unknownStolen - player.unknownLost}</td><td class="structure">${player.roads}</td><td class="structure">${player.settlements}</td><td class="structure">${player.cities}</td>`;
   }
 
   body.appendChild(playerTable);
@@ -753,3 +770,5 @@ function renderTable() {
 
   body.appendChild(bankTable);
 }
+
+module.exports = { sanitizeEventText };
